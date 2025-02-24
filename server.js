@@ -1,4 +1,5 @@
-require("dotenv").config();
+require("dotenv").config({ path: "./pass.env" });
+
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
@@ -10,9 +11,10 @@ const API_KEY = process.env.COINAPI_KEY;
 app.use(cors());
 app.use(express.json());
 
-// 📌 API to fetch Bitcoin's yearly price history
 app.get("/api/bitcoin-yearly", async (req, res) => {
   try {
+    console.log("Fetching Bitcoin data...");
+
     const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split("T")[0];
 
     const response = await axios.get(
@@ -22,26 +24,28 @@ app.get("/api/bitcoin-yearly", async (req, res) => {
       },
     );
 
-    if (response.data?.length > 0) {
-      const formattedData = response.data
-        .filter((entry) => entry.rate_close)
-        .map((entry) => ({
-          date: new Date(entry.time_period_start).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-          price: parseFloat(entry.rate_close.toFixed(2)),
-        }));
-
-      return res.json({ success: true, data: formattedData.reverse() });
+    if (!response.data || response.data.length === 0) {
+      console.error("No data received from API.");
+      return res.status(404).json({ success: false, error: "No data found" });
     }
 
-    return res.status(404).json({ success: false, error: "No data found" });
+    const formattedData = response.data
+      .filter((entry) => entry.rate_close)
+      .map((entry) => ({
+        date: new Date(entry.time_period_start).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        price: parseFloat(entry.rate_close.toFixed(2)),
+      }));
+
+    console.log("Bitcoin data fetched successfully.");
+    return res.json({ success: true, data: formattedData.reverse() });
   } catch (error) {
-    console.error("Error fetching Bitcoin yearly data:", error);
+    console.error("Error fetching Bitcoin data:", error.response?.data || error.message);
     return res.status(500).json({ success: false, error: "Failed to fetch data" });
   }
 });
 
-// Start the server
+// Start the server after defining all routes
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
