@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: "./pass.env" });
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
