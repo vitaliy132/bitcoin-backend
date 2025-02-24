@@ -10,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const COINAPI_KEY = process.env.COINAPI_KEY;
+const PORTFOLIO_COINAPI_KEY = process.env.PORTFOLIO_COINAPI_KEY;
 const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
 
 app.use(cors());
@@ -35,7 +36,9 @@ app.get("/api/exchange-rates", async (req, res) => {
   try {
     const responses = await Promise.all(
       assets.map((asset) =>
-        axios.get(`https://rest.coinapi.io/v1/exchangerate/${asset}/USD?apikey=${COINAPI_KEY}`),
+        axios.get(
+          `https://rest.coinapi.io/v1/exchangerate/${asset}/USD?apikey=${PORTFOLIO_COINAPI_KEY}`,
+        ),
       ),
     );
 
