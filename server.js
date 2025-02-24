@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 5000;
 const COINAPI_KEY = process.env.COINAPI_KEY;
 const PORTFOLIO_COINAPI_KEY = process.env.PORTFOLIO_COINAPI_KEY;
 const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
+const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
 
 app.use(cors());
 app.use(express.json());
@@ -139,6 +140,25 @@ app.get("/api/portfolio", async (req, res) => {
   } catch (error) {
     console.error("Error fetching portfolio exchange rates:", error);
     res.status(500).json({ success: false, error: "Failed to fetch portfolio exchange rates." });
+  }
+});
+
+// 🟢 Route 6: Get Bitcoin Price from CoinMarketCap
+app.get("/api/bitcoin-price", async (req, res) => {
+  try {
+    const response = await axios.get(
+      "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+      {
+        params: { symbol: "BTC", convert: "USD" },
+        headers: { "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY },
+      },
+    );
+
+    const price = response.data?.data?.BTC?.quote?.USD?.price ?? "N/A";
+    res.json({ success: true, price });
+  } catch (error) {
+    console.error("Error fetching Bitcoin price from CoinMarketCap:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch Bitcoin price." });
   }
 });
 
