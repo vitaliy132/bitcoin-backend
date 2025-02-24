@@ -116,4 +116,27 @@ app.get("/api/bitcoin-news", async (req, res) => {
   }
 });
 
+// 🟢 Route 5: Get Portfolio Exchange Rates (BTC, ETH, XRP)
+app.get("/api/portfolio", async (req, res) => {
+  const assets = ["BTC", "ETH", "XRP"];
+
+  try {
+    const responses = await Promise.all(
+      assets.map((asset) =>
+        axios.get(`https://rest.coinapi.io/v1/exchangerate/${asset}/USD?apikey=${COINAPI_KEY}`),
+      ),
+    );
+
+    const portfolioRates = responses.reduce((acc, response, index) => {
+      acc[assets[index]] = response.data?.rate ?? "N/A";
+      return acc;
+    }, {});
+
+    res.json({ success: true, portfolio: portfolioRates });
+  } catch (error) {
+    console.error("Error fetching portfolio exchange rates:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch portfolio exchange rates." });
+  }
+});
+
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
