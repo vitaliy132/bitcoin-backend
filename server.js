@@ -1,4 +1,7 @@
 require("dotenv").config({ path: "./pass.env" });
+
+console.log("Loaded ENV Variables:", process.env);
+
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
