@@ -1,51 +1,63 @@
 require("dotenv").config({ path: "./pass.env" });
-
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const API_KEY = process.env.COINAPI_KEY;
+const API_KEY = process.env.COINAPI_KEY; // Ensure this is set in your .env file
 
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/bitcoin-yearly", async (req, res) => {
+// 🚀 NEW ROUTE: Get Daily Bitcoin Price Change
+app.get("/api/bitcoin-price-change", async (req, res) => {
   try {
-    console.log("Fetching Bitcoin data...");
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
 
-    const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split("T")[0];
+    // Fetch today's BTC price
+    const todayResponse = await axios.get("https://rest.coinapi.io/v1/exchangerate/BTC/USD", {
+      headers: { "X-CoinAPI-Key": API_KEY },
+    });
 
-    const response = await axios.get(
-      `https://rest.coinapi.io/v1/exchangerate/BTC/USD/history?period_id=1DAY&time_start=${yearStart}T00:00:00`,
+    // Fetch yesterday's BTC price
+    const historyResponse = await axios.get(
+      `https://rest.coinapi.io/v1/exchangerate/BTC/USD/history?period_id=1DAY&time_start=${yesterday}T00:00:00`,
       {
         headers: { "X-CoinAPI-Key": API_KEY },
       },
     );
 
-    if (!response.data || response.data.length === 0) {
-      console.error("No data received from API.");
-      return res.status(404).json({ success: false, error: "No data found" });
+    const todayRate = todayResponse.data?.rate ?? null;
+    const yesterdayRate = historyResponse.data?.rates?.[0]?.rate_close ?? null;
+
+    if (!todayRate || !yesterdayRate) {
+      return res.status(500).json({ success: false, error: "Incomplete data received." });
     }
 
-    const formattedData = response.data
-      .filter((entry) => entry.rate_close)
-      .map((entry) => ({
-        date: new Date(entry.time_period_start).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        price: parseFloat(entry.rate_close.toFixed(2)),
-      }));
+    const change = todayRate - yesterdayRate;
+    const percentChange = ((change / yesterdayRate) * 100).toFixed(2);
 
-    console.log("Bitcoin data fetched successfully.");
-    return res.json({ success: true, data: formattedData.reverse() });
+    return res.json({
+      success: true,
+      todayPrice: todayRate.toFixed(2),
+      yesterdayPrice: yesterdayRate.toFixed(2),
+      change: change.toFixed(2),
+      percentChange,
+    });
   } catch (error) {
-    console.error("Error fetching Bitcoin data:", error.response?.data || error.message);
-    return res.status(500).json({ success: false, error: "Failed to fetch data" });
+    console.error("Error fetching Bitcoin price change:", error);
+
+    if (error.response?.status === 429) {
+      return res.status(429).json({
+        success: false,
+        error: "Rate limit exceeded. Please wait before trying again.",
+      });
+    }
+
+    return res.status(500).json({ success: false, error: "Failed to fetch Bitcoin price data." });
   }
 });
 
-// Start the server after defining all routes
+// Start the server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
