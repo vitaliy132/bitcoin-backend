@@ -63,4 +63,42 @@ app.get("/api/bitcoin-news", async (req, res) => {
   }
 });
 
+// 🟢 Route: CHART Get 12-Month Bitcoin Price Data
+app.get("/api/bitcoin-yearly", async (req, res) => {
+  try {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const timeStart = oneYearAgo.toISOString().split("T")[0];
+    const timeEnd = new Date().toISOString().split("T")[0];
+
+    const response = await axios.get(
+      "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical",
+      {
+        params: {
+          symbol: "BTC",
+          convert: "USD",
+          time_start: timeStart,
+          time_end: timeEnd,
+          interval: "1M",
+        },
+        headers: { "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY },
+      },
+    );
+
+    const priceData = response.data?.data?.quotes?.map((quote) => ({
+      date: quote.timestamp.slice(0, 10),
+      price: quote.quote.USD.price,
+    }));
+
+    if (!priceData || priceData.length === 0) {
+      return res.status(404).json({ success: false, error: "No data available." });
+    }
+
+    return res.json({ success: true, data: priceData });
+  } catch (error) {
+    console.error("Error fetching Bitcoin yearly data:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch Bitcoin data." });
+  }
+});
+
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
