@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // 🟢 Route: Get Current Bitcoin Price ✅
-app.get("/api/current-bitcoin-price", async (req, res) => {
+app.get("/api/bitcoin-price", async (req, res) => {
   try {
     const response = await axios.get(
       "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
@@ -60,25 +60,6 @@ app.get("/api/bitcoin-news", async (req, res) => {
   } catch (error) {
     console.error("Error fetching Bitcoin news:", error);
     return res.status(500).json({ success: false, error: "Failed to fetch Bitcoin news." });
-  }
-});
-
-// 🟢 Route: Get Bitcoin Price Change ✅
-app.get("/api/bitcoin-price", async (req, res) => {
-  try {
-    const response = await axios.get(
-      "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-      {
-        params: { symbol: "BTC", convert: "USD" },
-        headers: { "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY },
-      },
-    );
-
-    const price = response.data?.data?.BTC?.quote?.USD?.price ?? "N/A";
-    res.json({ success: true, price });
-  } catch (error) {
-    console.error("Error fetching Bitcoin price from CoinMarketCap:", error);
-    res.status(500).json({ success: false, error: "Failed to fetch Bitcoin price." });
   }
 });
 
