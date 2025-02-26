@@ -102,4 +102,21 @@ app.get("/api/bitcoin-yearly", async (req, res) => {
   }
 });
 
+// 🟢 Route: Get Fear & Greed Index ✅
+app.get("/api/fear-greed", async (req, res) => {
+  try {
+    const response = await axios.get("https://api.alternative.me/fng/");
+    const indexData = response.data.data[0];
+
+    return res.json({
+      success: true,
+      index: indexData.value,
+      classification: indexData.value_classification,
+    });
+  } catch (error) {
+    console.error("Error fetching Fear & Greed Index:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch data." });
+  }
+});
+
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
