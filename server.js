@@ -15,33 +15,27 @@ const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
 app.use(cors());
 app.use(express.json());
 
-// 🟢 Route: Get Current Prices for BTC, ETH, and XRP ✅
-app.get("/api/crypto-prices", async (req, res) => {
+// 🟢 Route: Get Current Bitcoin Price ✅
+app.get("/api/bitcoin-price", async (req, res) => {
   try {
     const response = await axios.get(
       "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
       {
-        params: { symbol: "BTC,ETH,XRP", convert: "USD" },
+        params: { symbol: "BTC", convert: "USD" },
         headers: { "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY },
       },
     );
 
-    const prices = {
-      btc: response.data?.data?.BTC?.quote?.USD?.price ?? null,
-      eth: response.data?.data?.ETH?.quote?.USD?.price ?? null,
-      xrp: response.data?.data?.XRP?.quote?.USD?.price ?? null,
-    };
+    const price = response.data?.data?.BTC?.quote?.USD?.price ?? null;
 
-    if (!prices.btc || !prices.eth || !prices.xrp) {
-      return res.status(404).json({ success: false, error: "Price data not found." });
+    if (!price) {
+      return res.status(404).json({ success: false, error: "Bitcoin price not found." });
     }
 
-    return res.json({ success: true, prices });
+    return res.json({ success: true, price });
   } catch (error) {
-    console.error("Error fetching crypto prices:", error);
-    return res
-      .status(500)
-      .json({ success: false, error: "Failed to fetch cryptocurrency prices." });
+    console.error("Error fetching Bitcoin price:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch Bitcoin price." });
   }
 });
 
